@@ -7,11 +7,20 @@ RUN apt-get update && apt-get install -y \
 RUN ln -sv /usr/bin/python3 /usr/bin/python
 
 # create a non-root user
-ARG USER_ID=1000
+ARG USER_ID=1001
 RUN useradd -m --no-log-init --system  --uid ${USER_ID} appuser -g sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 USER appuser
 WORKDIR /home/appuser
+
+# upgrade python
+RUN sudo apt-get update && \
+    sudo apt-get install -y software-properties-common && \
+    sudo add-apt-repository ppa:deadsnakes/ppa && \
+    sudo apt-get update && \
+    sudo apt-get install -y python3.8 python3.8-dev python3.8-distutils && \
+    sudo ln -sf /usr/bin/python3.8 /usr/bin/python3 && \
+    sudo ln -sf /usr/bin/python3.8 /usr/bin/python
 
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 RUN wget https://bootstrap.pypa.io/pip/3.6/get-pip.py && \
@@ -23,9 +32,9 @@ RUN wget https://bootstrap.pypa.io/pip/3.6/get-pip.py && \
 RUN pip install --user tensorboard cmake onnx   # cmake from apt-get is too old
 RUN pip install --user torch==1.10 torchvision==0.11.1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
-RUN pip install --user 'git+https://github.com/facebookresearch/fvcore'
+RUN pip install --user 'git+https://github.com/djaliloua/fvcore'
 # install detectron2
-RUN git clone https://github.com/facebookresearch/detectron2 detectron2_repo
+RUN git clone https://github.com/djaliloua/detectron2 detectron2_repo
 # set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"
 # This will by default build detectron2 for all common cuda architectures and take a lot more time,
